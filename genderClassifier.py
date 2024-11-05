@@ -6,6 +6,7 @@ from keras import layers
 import matplotlib.pyplot as plt
 import numpy as np
 
+#%% GENERATE DATA
 # load labels
 labels = np.loadtxt("./data/lfw-deepfunneled-gender.txt",
                     delimiter="\t",
@@ -18,11 +19,11 @@ females = labels[labels[:,1] != "male",0]
 females_train = females[0:1000]
 females_test = females[1000:1200]
 train = np.append(males_train, females_train)
-train_label = np.vstack((np.full((3500, 1), "male", dtype="<U12"), 
-                        np.full((1000, 1), "female", dtype="<U12")))
+train_label = np.vstack((np.full((3500, 1), 1), 
+                        np.full((1000, 1), 0)))
 test = np.append(males_test, females_test)
-test_label = np.vstack((np.full((500, 1), "male", dtype="<U12"), 
-                        np.full((200, 1), "female", dtype="<U12")))
+test_label = np.vstack((np.full((500, 1), 1), 
+                        np.full((200, 1), 0)))
 del labels, males, females, males_test, males_train, females_test, females_train
 
 train_data = np.zeros((100, 100, 3, 99999))
@@ -31,13 +32,12 @@ i = 0
 for dir in train:
     filepath = "./data/lfw-deepfunneled/" + dir
     files = os.listdir(filepath)
-    for file in files:
-        img = Image.open(filepath + "/" + file)
-        img = img.crop((25, 25, 225, 225))
-        img = img.resize((100, 100))
-        train_data[:,:,:,i] = img
-        i += 1
-train_data = train_data[:, :, :, :i]
+    img = Image.open(filepath + "/" + files[0])
+    img = img.crop((25, 25, 225, 225))
+    img = img.resize((100, 100))
+    train_data[:,:,:,i] = img
+    i += 1
+train_data = train_data[:, :, :, :i] / 255.0
 
 # load testing_data
 test_data = np.zeros((100, 100, 3, 99999))
@@ -45,11 +45,70 @@ i = 0
 for dir in test:
     filepath = "./data/lfw-deepfunneled/" + dir
     files = os.listdir(filepath)
-    for file in files:
-        img = Image.open(filepath + "/" + file)
-        img = img.crop((25, 25, 225, 225))
-        img = img.resize((100, 100))
-        test_data[:, :, :, i] = img
-        i += 1
-test_data = test_data[:, :, :, :i]
-print(len(train_label), len(test_label))
+    img = Image.open(filepath + "/" + files[0])
+    img = img.crop((25, 25, 225, 225))
+    img = img.resize((100, 100))
+    test_data[:, :, :, i] = img
+    i += 1
+
+test_data = test_data[:, :, :, :i] / 255.0
+
+train_data = np.transpose(train_data, (3, 0, 1, 2))
+test_data = np.transpose(test_data, (3, 0, 1, 2))
+
+
+#%% MODEL CONFIG
+ngender = 2
+
+# transform label vectors to binary
+train_label = keras.utils.to_categorical(train_label, ngender)
+test_label = keras.utils.to_categorical(test_label, ngender)
+
+print("\n----------------------------------------------\nDATA LOADED.")
+print("Training images: ", len(train_data))
+print("Testing images: ", len(test_data))
+print("Shape of train_data: ", train_data.shape)
+print("Shape of test_data:", test_data.shape)
+print("\n----------------------------------------------\n")
+
+# layers config
+model = keras.Sequential(
+    [
+    keras.Input(shape=(100, 100, 3)),
+    layers.Conv2D(16, kernel_size=(3, 3), activation="relu"), # generate convolution kernel
+    layers.MaxPool2D(pool_size=(2, 2)), # pool, using maxpooling method
+    layers.Conv2D(16, kernel_size=(3, 3), activation="relu"),
+    layers.MaxPooling2D(pool_size=(2, 2)),
+    layers.Flatten(),
+    layers.Dense(ngender, activation="softmax", use_bias=True),
+    ]
+)
+
+# export summary
+model.summary()
+
+# compile model
+model.compile(
+    loss="categorical_crossentropy",
+    optimizer="adam",
+    metrics=["accuracy"]
+)
+
+#%% TRAINING
+# send data to model
+# As document said, Do not specify the batch_size if your data is in the form of datasets, 
+# generators, or keras.utils.Sequence instances (since they generate batches).
+model.fit(
+    train_data,
+    train_label,
+    epochs = 20,
+    validation_split=0.1
+)
+
+# evaluate model using test_data and test_label
+score = model.evaluate(test_data, test_label, verbose=2)
+
+# evaluation output
+print('-----------------------\nEvaluating the trained model.')
+print('Test loss:', score[0])
+print('Test accuracy:', score[1])
