@@ -75,12 +75,14 @@ print("\n----------------------------------------------\n")
 model = keras.Sequential(
     [
     keras.Input(shape=(100, 100, 3)),
-    layers.Conv2D(16, kernel_size=(3, 3), activation="relu"), # generate convolution kernel
-    layers.MaxPool2D(pool_size=(2, 2)), # pool, using maxpooling method
-    layers.Conv2D(16, kernel_size=(3, 3), activation="relu"),
+    layers.Conv2D(2, kernel_size=(3, 3), activation="relu"),
+    layers.MaxPool2D(pool_size=(2, 2)),
+    layers.Conv2D(3, kernel_size=(3, 3), activation="relu"),
+    layers.MaxPooling2D(pool_size=(2, 2)),
+    layers.Conv2D(2, kernel_size=(3, 3), activation="relu"),
     layers.MaxPooling2D(pool_size=(2, 2)),
     layers.Flatten(),
-    layers.Dense(ngender, activation="softmax", use_bias=True),
+    layers.Dense(ngender, activation="softmax"),
     ]
 )
 
