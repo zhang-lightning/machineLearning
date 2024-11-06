@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Wed Nov  6 21:11:07 2024
+
+@author: Zeshen
+"""
 import os
 from tensorflow import keras
 from PIL import Image
 from keras import layers
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 #%% GENERATE DATA
 # load labels
@@ -56,62 +63,25 @@ test_data = test_data[:, :, :, :i] / 255.0
 train_data = np.transpose(train_data, (3, 0, 1, 2))
 test_data = np.transpose(test_data, (3, 0, 1, 2))
 
-#%% MODEL CONFIG
-ngender = 2
+model = keras.models.load_model('data/gender_classifier_model.h5')
 
-# transform label vectors to binary
-train_label = keras.utils.to_categorical(train_label, ngender)
-test_label = keras.utils.to_categorical(test_label, ngender)
+predict_result = model.predict(np.expand_dims(test_data[0,:,:,:], axis=0))
+print(predict_result)
+if np.argmax(predict_result) == 1:
+    predictedValue = "male"
+    val = predict_result[:,1] * 100
+else:
+    predictedValue = "female"
+    val = predict_result[:,0] * 100
+x = test_data[0, :, :, :]
+del model, train_data, test_data, 
 
-print("\n----------------------------------------------\nDATA LOADED.")
-print("Training images: ", len(train_data))
-print("Testing images: ", len(test_data))
-print("Shape of train_data: ", train_data.shape)
-print("Shape of test_data:", test_data.shape)
-print("\n----------------------------------------------\n")
-
-# layers config
-model = keras.Sequential(
-    [
-    keras.Input(shape=(100, 100, 3)),
-    layers.Conv2D(4, kernel_size=(3, 3), activation="relu"),
-    layers.AveragePooling2D(pool_size=(4, 4)),
-    layers.Conv2D(8, kernel_size=(3, 3), activation="relu"),
-    layers.MaxPooling2D(pool_size=(2, 2)),
-    layers.Conv2D(8, kernel_size=(3, 3), activation="relu"),
-    layers.Flatten(),
-    layers.Dense(ngender, activation="softmax"),
-    ]
-)
-
-# export summary
-model.summary()
-
-# compile model
-model.compile(
-    loss="categorical_crossentropy",
-    optimizer="adam",
-    metrics=["accuracy"]
-)
-
-#%% TRAINING
-# send data to model
-# As document said, Do not specify the batch_size if your data is in the form of datasets, 
-# generators, or keras.utils.Sequence instances (since they generate batches).
-model.fit(
-    train_data,
-    train_label,
-    epochs = 20,
-    validation_split=0.1
-)
-
-# evaluate model using test_data and test_label
-score = model.evaluate(test_data, test_label, verbose=2)
-
-# evaluation output
-print('-----------------------\nEvaluating the trained model.')
-print('Test loss:', score[0])
-print('Test accuracy:', score[1])
-
-# export model
-model.save("./data/gender_classifier_model.h5")
+# evaluate show
+plt.figure(figsize=(3, 3))
+plt.subplot(1,2,1)
+plt.imshow(x)
+plt.grid(False)
+plt.xticks([])
+plt.yticks([])
+plt.title("true_value = male\npredicted = " + predictedValue, "%")
+plt.show()
