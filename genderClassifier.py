@@ -75,12 +75,11 @@ print("\n----------------------------------------------\n")
 model = keras.Sequential(
     [
     keras.Input(shape=(100, 100, 3)),
-    layers.Conv2D(2, kernel_size=(3, 3), activation="relu"),
-    layers.MaxPool2D(pool_size=(2, 2)),
-    layers.Conv2D(3, kernel_size=(3, 3), activation="relu"),
+    layers.Conv2D(4, kernel_size=(3, 3), activation="relu"),
+    layers.AveragePooling2D(pool_size=(4, 4)),
+    layers.Conv2D(8, kernel_size=(3, 3), activation="relu"),
     layers.MaxPooling2D(pool_size=(2, 2)),
-    layers.Conv2D(2, kernel_size=(3, 3), activation="relu"),
-    layers.MaxPooling2D(pool_size=(2, 2)),
+    layers.Conv2D(8, kernel_size=(3, 3), activation="relu"),
     layers.Flatten(),
     layers.Dense(ngender, activation="softmax"),
     ]
@@ -106,6 +105,12 @@ model.fit(
     epochs = 20,
     validation_split=0.1
 )
+predict_result = model.predict(np.expand_dims(test_data[0,:,:,:], axis=0))
+print(predict_result)
+if np.argmax(predict_result) == 1:
+    predictedValue = "male"
+else:
+    predictedValue = "female"
 
 # evaluate model using test_data and test_label
 score = model.evaluate(test_data, test_label, verbose=2)
@@ -114,3 +119,16 @@ score = model.evaluate(test_data, test_label, verbose=2)
 print('-----------------------\nEvaluating the trained model.')
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
+
+# export model
+model.save("./data/gender_classifier_model.h5")
+
+# evaluate show
+plt.figure(figsize=(6, 4))
+plt.subplot(1,2,1)
+plt.imshow(test_data[0,:,:,:])
+plt.grid(False)
+plt.xticks([])
+plt.yticks([])
+plt.xlabel("true_value = male, predicted = " + predictedValue)
+plt.show()
