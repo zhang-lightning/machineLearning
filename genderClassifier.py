@@ -114,4 +114,23 @@ print('Test loss:', score[0])
 print('Test accuracy:', score[1])
 
 # export model
-model.save("./data/gender_classifier_model.h5")
+#model.save("./data/gender_classifier_model.h5")
+
+predict_result = model.predict(np.expand_dims(test_data[0,:,:,:], axis=0))
+print(predict_result)
+if np.argmax(predict_result) == 1:
+    predictedValue = "male"
+    val = predict_result[:,1] * 100
+else:
+    predictedValue = "female"
+    val = predict_result[:,0] * 100
+
+# evaluate show
+plt.figure(figsize=(3, 3))
+plt.subplot(1,2,1)
+plt.imshow(test_data[0, :, :, :])
+plt.grid(False)
+plt.xticks([])
+plt.yticks([])
+plt.title("true_value = male\npredicted = "+predictedValue+"\np = "+str(val)+"%")
+plt.show()
