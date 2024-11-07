@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
-"""
-Extract lightning lightning intensity data in 2011, and 
-save as a xlsx file.
-
-@author: Zeshen
-"""
-import os
-import numpy as np
+import glob
 import pandas as pd
-import datetime as dt
 
-files = os.listdir("./data/")
-names = ["time", "lap1"]
-for file in files:
-    if file[-3:]=='csv':
-        path = "./data/" + file
-        data = pd.read_csv(path, sep=",")
-        
-    else:
-        continue
+path = "./data/"
+pattern = "*.csv"
+
+# get file list
+filelist = glob.glob(path + pattern)
+
+# define column names
+colNames = ["time", "lap1", "lap2", "lap3", "lap4", "lap5", "lap6",
+            "magNS", "magWE", "slowE", "fastE"]
+
+# read each files and merge into xlsx file
+outputfile = path + "data_merged.xlsx"
+with pd.ExcelWriter(outputfile) as writer:
+    for i, file in enumerate(filelist):
+        df = pd.read_csv(file, header=None, names = colNames, parse_dates=["time"])
+        sheetName = f"data{i+1}"
+        df.to_excel(writer, sheet_name=sheetName, index=False)
