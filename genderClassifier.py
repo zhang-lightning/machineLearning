@@ -116,7 +116,7 @@ print('Test accuracy:', score[1])
 # export model
 #model.save("./data/gender_classifier_model.h5")
 
-predict_result = model.predict(np.expand_dims(test_data[0,:,:,:], axis=0))
+predict_result = model.predict(np.expand_dims(test_data[3,:,:,:], axis=0))
 print(predict_result)
 if np.argmax(predict_result) == 1:
     predictedValue = "male"
@@ -127,8 +127,7 @@ else:
 
 # evaluate show
 plt.figure(figsize=(3, 3))
-plt.subplot(1,2,1)
-plt.imshow(test_data[0, :, :, :])
+plt.imshow(test_data[3, :, :, :])
 plt.grid(False)
 plt.xticks([])
 plt.yticks([])
